@@ -150,8 +150,5 @@ curl http://localhost:8080/api/chirps
 
 ---
 
-## 🤝 Contributing
-PRs welcome.
-
 ## 📜 License
 MIT
