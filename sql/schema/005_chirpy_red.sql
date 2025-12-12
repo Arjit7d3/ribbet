@@ -1,6 +1,6 @@
 -- +goose Up
 ALTER TABLE users
-ADD COLUMN hashed_password TEXT NOT NULL DEFAULT 'unset';
+ADD COLUMN is_chirpy_red BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- +goose Down
 ALTER TABLE users

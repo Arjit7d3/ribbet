@@ -31,7 +31,6 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-
 	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
@@ -75,19 +74,42 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 func (cfg *apiConfig) handleChirpsReadAll(w http.ResponseWriter, r *http.Request) {
 	dbChirps, err := cfg.db.ListChirps(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get chirps", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps", err)
 		return
 	}
-	chirps := make([]Chirp, len(dbChirps))
 
-	for i, chirp := range dbChirps {
-		chirps[i] = Chirp{
-			Id:         chirp.ID,
-			Created_at: chirp.CreatedAt,
-			Updated_at: chirp.UpdatedAt,
-			Body:       chirp.Body,
-			UserID:     chirp.UserID,
+	authorID := uuid.Nil
+	authorIDString := r.URL.Query().Get("author_id")
+	if authorIDString != "" {
+		authorID, err = uuid.Parse(authorIDString)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Invalid author ID", err)
+			return
 		}
+	}
+
+	ordering := "asc"
+	if r.URL.Query().Get("sort") == "desc" {
+		ordering = "desc"
+	}
+
+	chirps := []Chirp{}
+	for _, dbChirp := range dbChirps {
+		if authorID != uuid.Nil && dbChirp.UserID != authorID {
+			continue
+		}
+
+		chirps = append(chirps, Chirp{
+			Id:         dbChirp.ID,
+			Created_at: dbChirp.CreatedAt,
+			Updated_at: dbChirp.UpdatedAt,
+			UserID:     dbChirp.UserID,
+			Body:       dbChirp.Body,
+		})
+	}
+
+	if ordering == "desc" {
+		slices.Reverse(chirps)
 	}
 
 	respondWithJSON(w, http.StatusOK, chirps)
