@@ -17,3 +17,11 @@ WHERE id = $1;
 -- name: ListChirps :many
 SELECT * FROM chirps
 ORDER BY created_at;
+
+-- name: DeleteChirp :exec
+DELETE FROM chirps
+WHERE id = $1;
+
+-- name: GetUserByChirp :one
+SELECT user_id FROM chirps
+WHERE id=$1;
